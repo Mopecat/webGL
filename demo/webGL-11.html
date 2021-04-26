@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>绘制渐变色三角形</title>
+    <title>绘制圆形</title>
     <style>
       html,
       body {
@@ -65,46 +65,61 @@
       gl.clearColor(0.0, 0.0, 0.0, 1.0);
       // 用上一步设置的清空画布颜色 清空画布
       gl.clear(gl.COLOR_BUFFER_BIT);
-      let positions = [];
-      let colors = [];
+
+      /**
+       * desc 计算每个顶点的坐标
+       * @param {number} x 圆心坐标
+       * @param {number} y 圆心坐标
+       * @param {number} radius 半径
+       * @param {number} n 分成的分数
+       * @returns {type} 返回值描述
+       */
+      function createCirCleVertex(x, y, radius, n) {
+        const sin = Math.sin;
+        const cos = Math.cos;
+        const positions = [x, y, 255, 0, 0, 1];
+        for (let i = 0; i <= n; i++) {
+          const angle = (i * Math.PI * 2) / n;
+          positions.push(
+            x + radius * sin(angle),
+            y + radius * cos(angle),
+            255,
+            0,
+            0,
+            1
+          );
+        }
+        return positions;
+      }
+      const positions = createCirCleVertex(100, 100, 50, 50);
       const a_Screen_Size = gl.getAttribLocation(program, "a_Screen_Size");
       const a_Position = gl.getAttribLocation(program, "a_Position");
       const a_Color = gl.getAttribLocation(program, "a_Color");
-      // const v_Color = gl.getUniformLocation(program, "v_Color");
       gl.vertexAttrib2f(a_Screen_Size, canvas.width, canvas.height);
+      // 启用对应的属性
+      gl.enableVertexAttribArray(a_Position);
+      gl.enableVertexAttribArray(a_Color);
 
-      const positionBuffer = createBuffer(gl, a_Position, { size: 2 });
-      const colorBuffer = createBuffer(gl, a_Color, { size: 4 });
+      const buffer = gl.createBuffer();
 
-      canvas.addEventListener("mouseup", (e) => {
-        positions.push(e.pageX, e.pageY);
-        const color = randomColor();
-        colors.push(color.r, color.g, color.b, color.a);
-
-        if (positions.length % 6 === 0) {
-          gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-          gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array(positions),
-            gl.DYNAMIC_DRAW
-          );
-          gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-          gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array(colors),
-            gl.DYNAMIC_DRAW
-          );
-          render(gl);
-        }
-      });
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      // 设置对应属性的buffer数据如何应用
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 24, 0);
+      gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 24, 8);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(positions),
+        gl.STATIC_DRAW
+      );
+      render(gl);
 
       function render(gl) {
         gl.clear(gl.COLOR_BUFFER_BIT);
         if (positions.length <= 0) {
           return;
         }
-        const primitiveType = gl.TRIANGLES;
-        gl.drawArrays(primitiveType, 0, positions.length / 2);
+        const primitiveType = gl.TRIANGLE_FAN;
+        gl.drawArrays(primitiveType, 0, positions.length / 6);
       }
     </script>
   </body>
